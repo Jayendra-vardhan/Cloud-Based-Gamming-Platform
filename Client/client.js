@@ -1,31 +1,41 @@
-// client.js
+const socket = io();
 
-const localVideo = document.getElementById('localVideo');
-const remoteVideo = document.getElementById('remoteVideo');
-const socket = io.connect('http://localhost:8080');
+const boardDiv = document.getElementById('board');
+let currentPlayer;
+let gameEnded = false;
 
-navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-  .then((stream) => {
-    localVideo.srcObject = stream;
+socket.on('initialState', ({ board, currentPlayer }) => {
+  updateBoard(board);
+  currentPlayer = currentPlayer;
+});
 
-    stream.getTracks().forEach((track) => {
-      socket.emit('video-audio', {
-        kind: track.kind,
-        streamId: track.id,
-        data: (sender) => {
-          if (sender.readyState === 'running') {
-            sender.receive(track);
-          }
-        },
+socket.on('updateState', ({ board, currentPlayer }) => {
+  updateBoard(board);
+  currentPlayer = currentPlayer;
+});
+
+socket.on('gameOver', ({ winner }) => {
+  gameEnded = true;
+  if (winner === 'tie') {
+    alert('It\'s a tie!');
+  } else {
+    alert(`Player ${winner} wins!`);
+  }
+});
+
+function updateBoard(board) {
+  boardDiv.innerHTML = '';
+  board.forEach((row, i) => {
+    row.forEach((cell, j) => {
+      const cellDiv = document.createElement('div');
+      cellDiv.classList.add('cell');
+      cellDiv.textContent = cell;
+      cellDiv.addEventListener('click', () => {
+        if (!gameEnded && cell === '') {
+          socket.emit('move', { row: i, col: j });
+        }
       });
+      boardDiv.appendChild(cellDiv);
     });
-
-    socket.on('video-audio', (data) => {
-      if (data.kind === 'video' || data.kind === 'audio') {
-        data.data(remoteVideo.srcObject.getVideoTracks()[0]);
-      }
-    });
-  })
-  .catch((err) => {
-    console.error('Error accessing media devices: ', err);
   });
+}
