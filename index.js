@@ -57,7 +57,7 @@ wsServer.on("request", request => {
                 "color": color
             })
             //start the game
-            if (game.clients.length === 3) updateGameState();
+            if (game.clients.length === 3||2) updateGameState();
 
             const payLoad = {
                 "method": "join",
