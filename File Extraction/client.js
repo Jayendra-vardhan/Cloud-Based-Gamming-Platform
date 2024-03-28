@@ -65,3 +65,9 @@ function updateServer(type, value) {
     ws.send(JSON.stringify({ clientId, type, value }));
   }
 }
+
+const playButton = document.getElementById('play-button');
+playButton.addEventListener('click', function() {
+  videoPlayer.play();
+  updateServer('playState', true);
+});

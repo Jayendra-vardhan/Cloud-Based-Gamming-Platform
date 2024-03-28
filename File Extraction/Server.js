@@ -1,10 +1,10 @@
 const WebSocket = require('ws');
 
-const wss = new WebSocket.Server({ port: 8080 });
+const webSockerServer = new WebSocket.Server({ port: 8080 },);
 
 let clients = {}; // Object to store clients and their states
 
-wss.on('connection', function connection(ws) {
+webSockerServer.on('connection', function connection(ws) {
   const clientId = generateGUID();
   clients[clientId] = { playState: false, timestamp: 0 };
 
@@ -30,7 +30,7 @@ wss.on('connection', function connection(ws) {
     }
 
     // Broadcast the updated state to all clients
-    wss.clients.forEach(function each(client) {
+    webSockerServer.clients.forEach(function each(client) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(clients[clientId]));
       }
