@@ -1,51 +1,74 @@
-const WebSocket = require('ws');
+const websocketServer = require("websocket").server
+const httpServer = http.createServer();
+httpServer.listen(9090, () => console.log("Listening.. on 9090"))
+const wsServer = new websocketServer({
+  "httpServer": httpServer
+})
+// Object to store clients and their states
+let clients = {};
+let connStrings = {};
 
-const webSockerServer = new WebSocket.Server({ port: 8080 },);
-
-let clients = {}; // Object to store clients and their states
-
-webSockerServer.on('connection', function connection(ws) {
-  const clientId = generateGUID();
-  clients[clientId] = { playState: false, timestamp: 0 };
-
-  console.log(`New client connected with ID: ${clientId}`);
-
-  // Send the GUID to the client
-  ws.send(JSON.stringify({ clientId }));
-
-  // Send initial state to the client
-  ws.send(JSON.stringify(clients[clientId]));
-
-  ws.on('message', function incoming(message) {
-    const data = JSON.parse(message);
-    const clientId = data.clientId;
-    const client = clients[clientId];
-    
-    if (!client) return;
-
-    if (data.type === 'playState') {
-      client.playState = data.value;
-    } else if (data.type === 'timestamp') {
-      client.timestamp = data.value;
-    }
-
-    // Broadcast the updated state to all clients
-    webSockerServer.clients.forEach(function each(client) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(clients[clientId]));
-      }
+wsServer.on('request', request => {
+//connect
+const conn = request.accept(null, request.origin);
+    conn.on("open", () => console.log("opened!"));
+    conn.on("close", () => {
+      delete clients[clientId];
+      console.log(`Client disconnected with ID: ${clientId}`);
     });
-  });
+    conn.on("message",message =>{
+      //received a message from the client
+      const result = JSON.parse(message.utf8Data)
+      //want to create a new connection point
+      if (result.method === "create") {
+        const clientId = result.clientId;
+        const conn = guid();
+        connStrings[conn] = {
+          "playState": false,
+          "timestamp": 0
+        }
+        
+        const payload = {
+          "method": "create",
+          "conn": connStrings[conn]
+        };
+        const con = clients[clientId].connection;
+        con.send(JSON.stringify(payload));
+      }
+      if (result.method === "join") {
+        const clientId = result.clientId;
+        const gameId
+      }
 
-  ws.on('close', function() {
-    delete clients[clientId];
-    console.log(`Client disconnected with ID: ${clientId}`);
-  });
+    })
+
+// console.log(`New client connected with ID: ${clientId}`);
+
+//  ws.on('request', request.accept(message) {
+//     const data = JSON.parse(message);
+//     const clientId = data.clientId;
+//     const client = clients[clientId];
+    
+//     if (!client) return;
+
+//     if (data.type === 'playState') {
+//       client.playState = data.value;
+//     } else if (data.type === 'timestamp') {
+//       client.timestamp = data.value;
+//     }
+
+    // // Broadcast the updated state to all clients
+    // clients.forEach((client) => {
+    //   if (client.readyState === WebSocket.OPEN) {
+    //     client.send(JSON.stringify(clients[clientId]));
+    //   }
+    // });
+  //});
 });
 
-function generateGUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
+function S4() {
+  return (((1+Math.random())*0x10000)|0).toString(16).substring(1); 
 }
+
+// then to call it, plus stitch in '4' in the third group
+const guid = () => (S4() + S4() + "-" + S4() + "-4" + S4().substring(0,3) + "-" + S4() + "-" + S4() + S4() + S4()).toLowerCase();

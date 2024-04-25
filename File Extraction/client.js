@@ -6,7 +6,7 @@ let timestamp = 0;
 let clientId = null;
 let duration = null;
 
-const ws = new WebSocket('ws://localhost:8080');
+const ws = new WebSocket('ws://localhost:9090');
 
 ws.onmessage = function(event) {
   const data = JSON.parse(event.data);
